@@ -30,38 +30,68 @@
               </q-list>
             </q-menu>
           </div>
-
-          <div class="q-ml-md cursor-pointer non-selectable">
-            Edit
-            <q-menu auto-close>
-              <q-list dense style="min-width: 100px">
-                <q-item clickable>
-                  <q-item-section>Cut</q-item-section>
-                </q-item>
-                <q-item clickable>
-                  <q-item-section>Copy</q-item-section>
-                </q-item>
-                <q-item clickable>
-                  <q-item-section>Paste</q-item-section>
-                </q-item>
-                <q-separator />
-                <q-item clickable>
-                  <q-item-section>Select All</q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
-          </div>
         </div>
       </q-header>
 
       <q-page-container>
         <q-page class="q-pa-md">
-          <p v-for="n in 15" :key="n">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Fugit nihil
-            praesentium molestias a adipisci, dolore vitae odit, quidem
-            consequatur optio voluptates asperiores pariatur eos numquam rerum
-            delectus commodi perferendis voluptate?
-          </p>
+          <q-table
+            title="Torrents"
+            :columns="torrentColumns"
+            :rows="torrents"
+            row-key="name"
+          >
+            <template v-slot:body="props">
+              <q-tr :props="props">
+                <q-td key="name" :props="props">
+                  {{ props.row.name }}
+                </q-td>
+                <q-td key="downloadSpeed" :props="props">
+                  {{ props.row.downloadSpeed }}
+                </q-td>
+                <q-td key="uploadSpeed" :props="props">
+                  {{ props.row.uploadSpeed }}
+                </q-td>
+                <q-td key="progress" :props="props">
+                  <q-linear-progress
+                    v-if="props.row.progress > 0.0 && props.row.progress < 1.0"
+                    size="25px"
+                    :value="props.row.progress"
+                    :color="info"
+                  >
+                    <div class="absolute-full flex flex-center">
+                      <q-badge
+                        color="dark"
+                        text-color="white"
+                        :label="(props.row.progress * 100).toFixed(2)"
+                      />
+                    </div>
+                  </q-linear-progress>
+                  <q-linear-progress
+                    v-else-if="props.row.progress === 0.0"
+                    size="25px"
+                    :value="props.row.progress"
+                    :color="warning"
+                  >
+                    <div class="absolute-full flex flex-center">
+                      <q-badge
+                        color="dark"
+                        text-color="white"
+                        :label="(props.row.progress * 100).toFixed(2)"
+                      />
+                    </div>
+                  </q-linear-progress>
+                  <q-linear-progress
+                    v-else-if="props.row.progress === 1.0"
+                    size="25px"
+                    :value="props.row.progress"
+                    :color="positive"
+                  >
+                  </q-linear-progress>
+                </q-td>
+              </q-tr>
+            </template>
+          </q-table>
         </q-page>
       </q-page-container>
     </q-layout>
@@ -69,25 +99,88 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { ipcRenderer } from 'electron';
-import { AddTorrentPayload } from '../store';
+import { QTable } from 'quasar';
+import { defineComponent, computed } from 'vue';
+import SentinelWindow from '../SentinelWindow';
+import { Torrent } from 'webtorrent';
+import TorrentsModule, { TorrentState } from '../store/modules/torrents';
+import { getModule } from 'vuex-module-decorators';
+import { useStore } from '../store';
+import { RootState } from '../store/rootStore';
+
+declare let window: SentinelWindow;
+
+const torrentColumns: QTable['columns'] = [
+  {
+    name: 'name',
+    required: true,
+    label: 'Name',
+    align: 'left',
+    field: (row: TorrentState) => row.name,
+    format: (value: string) => `${value}`,
+    sortable: true,
+  },
+  {
+    name: 'downloadSpeed',
+    required: true,
+    label: 'Download Speed',
+    align: 'left',
+    field: 'downloadSpeed',
+    sortable: true,
+  },
+  {
+    name: 'uploadSpeed',
+    required: true,
+    label: 'Upload Speed',
+    align: 'left',
+    field: 'uploadSpeed',
+    sortable: true,
+  },
+  {
+    name: 'progress',
+    required: true,
+    label: 'Progress',
+    align: 'left',
+    field: 'progress',
+    sortable: true,
+  },
+];
 
 export default defineComponent({
   name: 'MainLayout',
-  created: function () {
-    ipcRenderer.on('openTorrentFileFinished', (event, file: string) => {
-      const payload: AddTorrentPayload = {
-        path: file,
-      };
+  setup: function () {
+    const store = useStore();
+    const torrentsModule = getModule(TorrentsModule, store);
 
-      void this.$store.dispatch('addTorrent', payload);
-    });
-  },
-  methods: {
-    openTorrentFile: function () {
-      ipcRenderer.send('openTorrentFileDialog');
-    },
+    setInterval(() => {
+      window.torrentApi
+        .fetchTorrentStates()
+        .then((states) => {
+          torrentsModule.setTorrentStates(states);
+        })
+        .catch((reason) => console.error(reason));
+    }, 250);
+
+    function minimize() {
+      window.api.minimize();
+    }
+
+    function toggleMaximize() {
+      window.api.toggleMaximize();
+    }
+
+    function closeApp() {
+      window.api.close();
+    }
+
+    return {
+      minimize,
+      toggleMaximize,
+      closeApp,
+      openTorrentFile: () => torrentsModule.openTorrentFile(),
+      torrentColumns,
+      torrents: computed(() => torrentsModule.torrents),
+    };
   },
 });
 </script>
