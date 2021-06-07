@@ -13,7 +13,7 @@ export function formatBytes(bytes: number, decimals = 2) {
 }
 
 export function formatBytesPerSecond(bytes: number, decimals = 2) {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return '0 B/s';
 
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
