@@ -34,30 +34,29 @@
       </q-header>
 
       <q-page-container>
-        <q-page class="q-pa-md">
+        <q-page>
           <q-table
             title="Torrents"
             :columns="torrentColumns"
             :rows="torrents"
             row-key="name"
+            :hide-pagination="true"
           >
             <template v-slot:body="props">
               <q-tr :props="props">
-                <q-td key="name" :props="props">
-                  {{ props.row.name }}
-                </q-td>
+                <q-td key="name" :props="props"> {{ props.row.name }} </q-td>
                 <q-td key="downloadSpeed" :props="props">
-                  {{ props.row.downloadSpeed }}
+                  {{ formatBytesPerSecond(props.row.downloadSpeed) }}
                 </q-td>
                 <q-td key="uploadSpeed" :props="props">
-                  {{ props.row.uploadSpeed }}
+                  {{ formatBytesPerSecond(props.row.uploadSpeed) }}
                 </q-td>
                 <q-td key="progress" :props="props">
                   <q-linear-progress
                     v-if="props.row.progress > 0.0 && props.row.progress < 1.0"
                     size="25px"
                     :value="props.row.progress"
-                    :color="info"
+                    color="info"
                   >
                     <div class="absolute-full flex flex-center">
                       <q-badge
@@ -71,7 +70,7 @@
                     v-else-if="props.row.progress === 0.0"
                     size="25px"
                     :value="props.row.progress"
-                    :color="warning"
+                    color="warning"
                   >
                     <div class="absolute-full flex flex-center">
                       <q-badge
@@ -85,7 +84,7 @@
                     v-else-if="props.row.progress === 1.0"
                     size="25px"
                     :value="props.row.progress"
-                    :color="positive"
+                    color="positive"
                   >
                   </q-linear-progress>
                 </q-td>
@@ -102,11 +101,10 @@
 import { QTable } from 'quasar';
 import { defineComponent, computed } from 'vue';
 import SentinelWindow from '../SentinelWindow';
-import { Torrent } from 'webtorrent';
 import TorrentsModule, { TorrentState } from '../store/modules/torrents';
 import { getModule } from 'vuex-module-decorators';
 import { useStore } from '../store';
-import { RootState } from '../store/rootStore';
+import { formatBytesPerSecond } from '../utils';
 
 declare let window: SentinelWindow;
 
@@ -181,6 +179,11 @@ export default defineComponent({
       torrentColumns,
       torrents: computed(() => torrentsModule.torrents),
     };
+  },
+  methods: {
+    formatBytesPerSecond(bytes: number) {
+      return formatBytesPerSecond(bytes);
+    },
   },
 });
 </script>
