@@ -2,7 +2,8 @@ import { app, BrowserWindow, nativeTheme, ipcMain, dialog } from 'electron';
 import path from 'path';
 
 import WebTorrent from 'webtorrent';
-import { TorrentState } from './ipcTypes';
+import { TorrentState, TorrentStatus } from './ipcTypes';
+import Store from 'electron-store';
 
 require('@electron/remote/main').initialize();
 
@@ -19,6 +20,25 @@ try {
 
 let mainWindow: BrowserWindow | null;
 const torrentClient = new WebTorrent();
+
+const config = new Store<{
+  torrents: string[];
+}>({
+  defaults: {
+    torrents: [],
+  },
+});
+const torrentSavePath = 'C:/sentinel';
+
+initializeConfig();
+
+function initializeConfig() {
+  // Load torrents
+  const torrents = config.get('torrents') as string[];
+  for (const torrent of torrents) {
+    torrentClient.add(torrent, { path: torrentSavePath });
+  }
+}
 
 function createWindow() {
   /**
@@ -91,18 +111,47 @@ ipcMain.handle('openAddTorrentDialog', () => {
 });
 
 ipcMain.handle('addTorrent', (event, { path }) => {
-  torrentClient.add(path, {
-    path: 'C:/sentinel',
-  });
+  torrentClient.add(
+    path,
+    {
+      path: config.get('torrentSavePath') as string,
+    },
+    (torrent) => {
+      config.set('torrents', [
+        ...(config.get('torrents') as string[]),
+        torrent.magnetURI,
+      ]);
+    }
+  );
 });
 
 ipcMain.handle('fetchTorrentStates', (event): TorrentState[] => {
   return torrentClient.torrents.map((torrent): TorrentState => {
+    let status = TorrentStatus.Idle;
+    if (torrent.paused) {
+      status = TorrentStatus.Paused;
+    } else {
+      status = TorrentStatus.Downloading;
+    }
+
+    if (torrent.done) {
+      status = TorrentStatus.Finished;
+    }
+
     return {
       name: torrent.name,
       progress: torrent.progress,
       downloadSpeed: torrent.downloadSpeed,
       uploadSpeed: torrent.uploadSpeed,
+      timeRemaining:
+        (torrent.length - torrent.downloaded) / torrent.downloadSpeed,
+      received: torrent.received,
+      downloaded: torrent.downloaded,
+      uploaded: torrent.uploaded,
+      ratio: torrent.ratio,
+      length: torrent.length,
+      numPeers: torrent.numPeers,
+      status,
     };
   });
 });

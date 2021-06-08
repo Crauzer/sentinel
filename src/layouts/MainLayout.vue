@@ -36,20 +36,34 @@
       <q-page-container>
         <q-page>
           <q-table
-            title="Torrents"
-            :columns="torrentColumns"
-            :rows="torrents"
             row-key="name"
-            :hide-pagination="true"
+            :rows="torrents"
+            :columns="torrentColumns"
+            hide-pagination
           >
             <template v-slot:body="props">
-              <q-tr :props="props">
-                <q-td key="name" :props="props"> {{ props.row.name }} </q-td>
+              <q-tr
+                :props="props"
+                class="cursor-pointer"
+                @click.native="onTorrentRowClick(props.row)"
+              >
+                <q-td key="name" :props="props">
+                  {{ props.row.name }}
+                </q-td>
+                <q-td key="length" :props="props">
+                  {{ formatBytes(props.row.length) }}
+                </q-td>
                 <q-td key="downloadSpeed" :props="props">
                   {{ formatBytesPerSecond(props.row.downloadSpeed) }}
                 </q-td>
                 <q-td key="uploadSpeed" :props="props">
                   {{ formatBytesPerSecond(props.row.uploadSpeed) }}
+                </q-td>
+                <q-td key="status" :props="props">
+                  {{ props.row.status }}
+                </q-td>
+                <q-td key="timeRemaining" :props="props">
+                  {{ formatTimeRemaining(props.row.timeRemaining) }}
                 </q-td>
                 <q-td key="progress" :props="props">
                   <q-linear-progress
@@ -86,25 +100,48 @@
                     :value="props.row.progress"
                     color="positive"
                   >
+                    <div class="absolute-full flex flex-center">
+                      <q-badge
+                        color="dark"
+                        text-color="white"
+                        :label="(props.row.progress * 100).toFixed(2)"
+                      />
+                    </div>
                   </q-linear-progress>
                 </q-td>
+                <q-td key="numPeers" :props="props">
+                  {{ props.row.numPeers }}
+                </q-td>
+                <q-menu context-menu touch-position>
+                  <q-list dense style="min-width: 18rem">
+                    <q-item clickable v-close-popup>
+                      <q-item-section>Test</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
               </q-tr>
             </template>
           </q-table>
         </q-page>
       </q-page-container>
+
+      <q-footer elevated bordered class="bg-dark">
+        <torrent-info-panel> </torrent-info-panel>
+      </q-footer>
     </q-layout>
   </div>
 </template>
 
 <script lang="ts">
 import { QTable } from 'quasar';
-import { defineComponent, computed } from 'vue';
+import { defineComponent, computed, ref } from 'vue';
 import SentinelWindow from '../SentinelWindow';
 import TorrentsModule, { TorrentState } from '../store/modules/torrents';
 import { getModule } from 'vuex-module-decorators';
 import { useStore } from '../store';
-import { formatBytesPerSecond } from '../utils';
+import { formatBytes, formatBytesPerSecond } from '../utils';
+import TorrentInfoPanel from '../components/TorrentInfoPanel.vue';
+import moment from 'moment';
 
 declare let window: SentinelWindow;
 
@@ -116,6 +153,14 @@ const torrentColumns: QTable['columns'] = [
     align: 'left',
     field: (row: TorrentState) => row.name,
     format: (value: string) => `${value}`,
+    sortable: true,
+  },
+  {
+    name: 'length',
+    required: true,
+    label: 'Size',
+    align: 'left',
+    field: 'length',
     sortable: true,
   },
   {
@@ -135,6 +180,22 @@ const torrentColumns: QTable['columns'] = [
     sortable: true,
   },
   {
+    name: 'status',
+    required: true,
+    label: 'Status',
+    align: 'left',
+    field: 'status',
+    sortable: true,
+  },
+  {
+    name: 'timeRemaining',
+    required: true,
+    label: 'ETA',
+    align: 'left',
+    field: 'timeRemaining',
+    sortable: true,
+  },
+  {
     name: 'progress',
     required: true,
     label: 'Progress',
@@ -142,10 +203,21 @@ const torrentColumns: QTable['columns'] = [
     field: 'progress',
     sortable: true,
   },
+  {
+    name: 'numPeers',
+    required: true,
+    label: 'Peers',
+    align: 'left',
+    field: 'numPeers',
+    sortable: true,
+  },
 ];
 
 export default defineComponent({
   name: 'MainLayout',
+  components: {
+    TorrentInfoPanel,
+  },
   setup: function () {
     const store = useStore();
     const torrentsModule = getModule(TorrentsModule, store);
@@ -171,18 +243,31 @@ export default defineComponent({
       window.api.close();
     }
 
+    function onTorrentRowClick(row: TorrentState) {
+      torrentsModule.setSelectedTorrent(row);
+    }
+
     return {
       minimize,
       toggleMaximize,
       closeApp,
       openTorrentFile: () => torrentsModule.openTorrentFile(),
+      onTorrentRowClick,
+      torrentsInfoSplitterModel: ref(50),
       torrentColumns,
       torrents: computed(() => torrentsModule.torrents),
+      selectedTorrent: computed(() => torrentsModule.selectedTorrent),
     };
   },
   methods: {
+    formatBytes(bytes: number) {
+      return formatBytes(bytes);
+    },
     formatBytesPerSecond(bytes: number) {
       return formatBytesPerSecond(bytes);
+    },
+    formatTimeRemaining(seconds: number) {
+      return moment.duration(seconds, 'seconds').humanize(true);
     },
   },
 });

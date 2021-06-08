@@ -66,13 +66,13 @@ contextBridge.exposeInMainWorld('api', {
 });
 
 contextBridge.exposeInMainWorld('torrentApi', {
-  addTorrent: (path: string): Promise<TorrentState> => {
+  addTorrent: (path: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       ipcRenderer
         .invoke('addTorrent', {
           path,
         })
-        .then((torrent: Torrent) => resolve(torrent))
+        .then(() => resolve())
         .catch((reason) => reject(reason));
     });
   },

@@ -14,10 +14,21 @@ export interface TorrentState {
   progress: number;
   downloadSpeed: number;
   uploadSpeed: number;
-  seeds: number;
-  peers: number;
+  timeRemaining: number;
+  received: number;
+  downloaded: number;
+  uploaded: number;
   ratio: number;
-  size: number;
+  length: number;
+  numPeers: number;
+  status: TorrentStatus;
+}
+
+export enum TorrentStatus {
+  Idle = 'Idle',
+  Paused = 'Paused',
+  Downloading = 'Downloading',
+  Finished = 'Finished',
 }
 
 @Module({
@@ -25,6 +36,7 @@ export interface TorrentState {
 })
 export default class TorrentsModule extends VuexModule {
   torrents: TorrentState[] = [];
+  selectedTorrent: TorrentState | null = null;
 
   @Mutation
   addTorrent(torrent: TorrentState) {
@@ -34,6 +46,12 @@ export default class TorrentsModule extends VuexModule {
   @Mutation
   setTorrentStates(states: TorrentState[]) {
     this.torrents = states;
+  }
+
+  @Mutation
+  setSelectedTorrent(selectedTorrent: TorrentState) {
+    console.log(selectedTorrent);
+    this.selectedTorrent = selectedTorrent;
   }
 
   @Action

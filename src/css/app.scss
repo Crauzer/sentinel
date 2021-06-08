@@ -1,10 +1,10 @@
 // app global css in SCSS form
-::-webkit-scrollbar {
+ ::-webkit-scrollbar {
     background-color: $dark;
     width: .8em
 }
 
-::-webkit-scrollbar-thumb:window-inactive,
-::-webkit-scrollbar-thumb {
+ ::-webkit-scrollbar-thumb:window-inactive,
+ ::-webkit-scrollbar-thumb {
     background: $primary
 }
