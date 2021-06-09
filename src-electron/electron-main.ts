@@ -1,9 +1,11 @@
 import { app, BrowserWindow, nativeTheme, ipcMain, dialog } from 'electron';
 import path from 'path';
 
-import WebTorrent from 'webtorrent';
+import WebTorrent, { Torrent } from 'webtorrent';
 import { TorrentState, TorrentStatus } from './ipcTypes';
 import Store from 'electron-store';
+import TorrentManager from './torrentManager';
+import globalConfig from './globalConfig';
 
 require('@electron/remote/main').initialize();
 
@@ -19,31 +21,23 @@ try {
 } catch (_) {}
 
 let mainWindow: BrowserWindow | null;
-const torrentClient = new WebTorrent();
+const torrentManager = new TorrentManager();
 
-const config = new Store<{
-  torrents: string[];
-}>({
-  defaults: {
-    torrents: [],
-  },
-});
 const torrentSavePath = 'C:/sentinel';
 
 initializeConfig();
 
 function initializeConfig() {
   // Load torrents
-  const torrents = config.get('torrents') as string[];
-  for (const torrent of torrents) {
-    torrentClient.add(torrent, { path: torrentSavePath });
+  const configTorrents = globalConfig.get('torrents');
+  for (const configTorrent of configTorrents) {
+    if (configTorrent) {
+      torrentManager.addTorrent(configTorrent.path);
+    }
   }
 }
 
 function createWindow() {
-  /**
-   * Initial window options
-   */
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 600,
@@ -60,8 +54,10 @@ function createWindow() {
     },
   });
 
+  // Load content
   mainWindow?.loadURL(process.env.APP_URL ?? '');
 
+  // Dev Tools
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled
     mainWindow.webContents.openDevTools();
@@ -111,47 +107,43 @@ ipcMain.handle('openAddTorrentDialog', () => {
 });
 
 ipcMain.handle('addTorrent', (event, { path }) => {
-  torrentClient.add(
-    path,
-    {
-      path: config.get('torrentSavePath') as string,
-    },
-    (torrent) => {
-      config.set('torrents', [
-        ...(config.get('torrents') as string[]),
-        torrent.magnetURI,
-      ]);
-    }
-  );
+  torrentManager.addTorrent(path);
 });
 
-ipcMain.handle('fetchTorrentStates', (event): TorrentState[] => {
-  return torrentClient.torrents.map((torrent): TorrentState => {
-    let status = TorrentStatus.Idle;
-    if (torrent.paused) {
-      status = TorrentStatus.Paused;
-    } else {
-      status = TorrentStatus.Downloading;
-    }
+ipcMain.handle('resumeTorrent', (event, { infoHash }) => {
+  const pausedTorrent = torrentManager.torrents.find(
+    (torrent) => torrent.internalTorrent.infoHash === infoHash
+  );
+  if (pausedTorrent) {
+    torrentManager.resumeTorrent(pausedTorrent);
+  }
+});
 
-    if (torrent.done) {
-      status = TorrentStatus.Finished;
-    }
+ipcMain.handle('pauseTorrent', (event, { infoHash }) => {
+  const torrent = torrentManager.torrents.find(
+    (torrent) => torrent.internalTorrent.infoHash === infoHash
+  );
 
-    return {
-      name: torrent.name,
-      progress: torrent.progress,
-      downloadSpeed: torrent.downloadSpeed,
-      uploadSpeed: torrent.uploadSpeed,
-      timeRemaining:
-        (torrent.length - torrent.downloaded) / torrent.downloadSpeed,
-      received: torrent.received,
-      downloaded: torrent.downloaded,
-      uploaded: torrent.uploaded,
-      ratio: torrent.ratio,
-      length: torrent.length,
-      numPeers: torrent.numPeers,
-      status,
-    };
-  });
+  if (torrent) {
+    torrentManager.pauseTorrent(torrent);
+  }
+});
+
+ipcMain.handle('deleteTorrent', (event, { infoHash }) => {
+  const torrent = torrentManager.torrents.find(
+    (torrent) => torrent.internalTorrent.infoHash === infoHash
+  );
+
+  if (torrent) {
+    torrentManager.deleteTorrent(torrent);
+  }
+});
+
+ipcMain.handle('fetchTorrentStates', (): TorrentState[] => {
+  return torrentManager.torrents
+    .filter((torrent) => {
+      torrent.requestNewState();
+      return torrent.state;
+    })
+    .map((torrent) => torrent.state as TorrentState);
 });

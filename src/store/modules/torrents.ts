@@ -11,6 +11,7 @@ declare let window: SentinelWindow;
 
 export interface TorrentState {
   name: string;
+  infoHash: string;
   progress: number;
   downloadSpeed: number;
   uploadSpeed: number;
@@ -59,12 +60,14 @@ export default class TorrentsModule extends VuexModule {
     window.torrentApi
       .openTorrentFile()
       .then((path) => {
-        window.torrentApi
-          .addTorrent(path)
-          .then((torrent) => {
-            this.addTorrent(torrent);
-          })
-          .catch((reason) => console.error(reason));
+        if (path) {
+          window.torrentApi
+            .addTorrent(path)
+            .then((torrent) => {
+              this.addTorrent(torrent);
+            })
+            .catch((reason) => console.error(reason));
+        }
       })
       .catch((reason) => {
         console.error(reason);

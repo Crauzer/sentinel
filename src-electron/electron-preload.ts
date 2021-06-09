@@ -86,6 +86,32 @@ contextBridge.exposeInMainWorld('torrentApi', {
         });
     });
   },
+
+  resumeTorrent: (infoHash: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      ipcRenderer
+        .invoke('resumeTorrent', { infoHash })
+        .then(() => resolve())
+        .catch((reason) => reject(reason));
+    });
+  },
+  pauseTorrent: (infoHash: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      ipcRenderer
+        .invoke('pauseTorrent', { infoHash })
+        .then(() => resolve())
+        .catch((reason) => reject(reason));
+    });
+  },
+  deleteTorrent: (infoHash: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      ipcRenderer
+        .invoke('deleteTorrent', { infoHash })
+        .then(() => resolve())
+        .catch((reason) => reject(reason));
+    });
+  },
+
   fetchTorrentStates: (): Promise<TorrentState[]> => {
     return new Promise((resolve, reject) => {
       ipcRenderer

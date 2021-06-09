@@ -114,8 +114,38 @@
                 </q-td>
                 <q-menu context-menu touch-position>
                   <q-list dense style="min-width: 18rem">
-                    <q-item clickable v-close-popup>
-                      <q-item-section>Test</q-item-section>
+                    <q-item
+                      clickable
+                      v-close-popup
+                      v-if="props.row.status == `Paused`"
+                      @click="onTorrentResume(props.row)"
+                    >
+                      <q-item-section avatar>
+                        <q-icon color="primary" name="play" />
+                      </q-item-section>
+                      <q-item-section>Resume</q-item-section>
+                    </q-item>
+                    <q-item
+                      clickable
+                      v-close-popup
+                      v-if="props.row.status == `Downloading`"
+                      @click="onTorrentPause(props.row)"
+                    >
+                      <q-item-section avatar>
+                        <q-icon color="primary" name="pause" />
+                      </q-item-section>
+                      <q-item-section>Pause</q-item-section>
+                    </q-item>
+                    <q-separator />
+                    <q-item
+                      clickable
+                      v-close-popup
+                      @click="onTorrentDelete(props.row)"
+                    >
+                      <q-item-section avatar>
+                        <q-icon color="primary" name="delete" />
+                      </q-item-section>
+                      <q-item-section>Delete</q-item-section>
                     </q-item>
                   </q-list>
                 </q-menu>
@@ -268,6 +298,16 @@ export default defineComponent({
     },
     formatTimeRemaining(seconds: number) {
       return moment.duration(seconds, 'seconds').humanize(true);
+    },
+
+    async onTorrentResume(torrent: TorrentState) {
+      await window.torrentApi.resumeTorrent(torrent.infoHash);
+    },
+    async onTorrentPause(torrent: TorrentState) {
+      await window.torrentApi.pauseTorrent(torrent.infoHash);
+    },
+    async onTorrentDelete(torrent: TorrentState) {
+      await window.torrentApi.deleteTorrent(torrent.infoHash);
     },
   },
 });
