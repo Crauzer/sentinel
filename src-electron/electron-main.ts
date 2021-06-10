@@ -32,7 +32,9 @@ function initializeConfig() {
       const torrent = torrentManager.addTorrent(configTorrent.path);
 
       if (configTorrent.isPaused) {
-        torrentManager.pauseTorrent(new TorrentWrapper(torrent));
+        torrent.on('ready', () => {
+          torrentManager.pauseTorrent(new TorrentWrapper(torrent));
+        });
       }
     }
   }

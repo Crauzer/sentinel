@@ -37,7 +37,7 @@ export default class TorrentManager {
   pauseTorrent(pauseTorrent: TorrentWrapper) {
     pauseTorrent.isPaused = true;
 
-    pauseTorrent.pausedWires = [...pauseTorrent.internalTorrent.wires];
+    pauseTorrent.pausedWires = pauseTorrent.internalTorrent.wires;
     pauseTorrent.internalTorrent.wires = [];
 
     pauseTorrent.internalTorrent.pause();
@@ -47,7 +47,7 @@ export default class TorrentManager {
   resumeTorrent(resumeTorrent: TorrentWrapper) {
     resumeTorrent.isPaused = false;
 
-    resumeTorrent.internalTorrent.wires = [...resumeTorrent.pausedWires];
+    resumeTorrent.internalTorrent.wires = resumeTorrent.pausedWires;
     resumeTorrent.pausedWires = [];
     resumeTorrent.internalTorrent.resume();
   }
