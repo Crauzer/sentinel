@@ -1,7 +1,6 @@
-import { TorrentState, TorrentStatus } from './ipcTypes';
 import WebTorrent, { Torrent } from 'webtorrent';
 import globalConfig, { ConfigTorrent } from './globalConfig';
-import { config } from 'vuex-module-decorators';
+import { TorrentState, TorrentStatus } from '../src-shared/torrent';
 
 export default class TorrentManager {
   client: WebTorrent.Instance;
@@ -18,7 +17,9 @@ export default class TorrentManager {
 
     this.torrents.push(new TorrentWrapper(torrent));
 
-    this.cacheTorrentMetadata();
+    torrent.on('metadata', () => {
+      this.cacheTorrentMetadata();
+    });
 
     return torrent;
   }
@@ -33,24 +34,23 @@ export default class TorrentManager {
       },
       (err) => console.error(err)
     );
+
+    this.cacheTorrentMetadata();
   }
   resumeTorrent(resumeTorrent: TorrentWrapper) {
     resumeTorrent.isPaused = false;
 
-    if (
-      this.client.torrents.find(
-        (torrent) =>
-          torrent.magnetURI == resumeTorrent.internalTorrent.magnetURI
-      ) === undefined
-    ) {
-      resumeTorrent.internalTorrent = this.client.add(
-        resumeTorrent.internalTorrent.magnetURI,
-        {
-          path: globalConfig.get('torrentSavePath'),
-        }
-      );
-      resumeTorrent.state = undefined;
-    }
+    resumeTorrent.internalTorrent = this.client.add(
+      resumeTorrent.internalTorrent.magnetURI,
+      {
+        path: globalConfig.get('torrentSavePath'),
+      }
+    );
+
+    resumeTorrent.internalTorrent.on('infoHash', () => {
+      this.cacheTorrentMetadata();
+      resumeTorrent.requestNewState();
+    });
   }
 
   deleteTorrent(deleteTorrent: TorrentWrapper) {
@@ -63,6 +63,8 @@ export default class TorrentManager {
     deleteTorrent.internalTorrent.destroy({
       destroyStore: true,
     });
+
+    this.cacheTorrentMetadata();
   }
   removeTorrent(removeTorrent: TorrentWrapper) {
     this.torrents = this.torrents.filter(
@@ -74,6 +76,8 @@ export default class TorrentManager {
     removeTorrent.internalTorrent.destroy({
       destroyStore: false,
     });
+
+    this.cacheTorrentMetadata();
   }
 
   cacheTorrentMetadata() {
@@ -145,6 +149,16 @@ export class TorrentWrapper {
       length: this.internalTorrent.length,
       numPeers: this.internalTorrent.numPeers,
       status,
+      announce: this.internalTorrent.announce,
+      files: this.internalTorrent.files.map((file) => {
+        return {
+          name: file.name,
+          path: file.path,
+          length: file.length,
+          downloaded: file.downloaded,
+          progress: file.progress,
+        };
+      }),
     };
   }
 }

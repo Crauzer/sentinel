@@ -12,6 +12,8 @@ export interface TorrentState {
   length: number;
   numPeers: number;
   status: TorrentStatus;
+  announce: string[];
+  files: TorrentFile[];
 }
 
 export enum TorrentStatus {
@@ -19,4 +21,12 @@ export enum TorrentStatus {
   Paused = 'Paused',
   Downloading = 'Downloading',
   Finished = 'Finished',
+}
+
+export interface TorrentFile {
+  name: string;
+  path: string;
+  length: number;
+  downloaded: number;
+  progress: number;
 }

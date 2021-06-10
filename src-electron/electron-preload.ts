@@ -1,7 +1,6 @@
-import { TorrentState } from './ipcTypes';
-import { Torrent } from 'webtorrent';
 import { contextBridge, ipcRenderer } from 'electron';
 import { BrowserWindow } from '@electron/remote';
+import { TorrentState } from '@/src-shared/torrent';
 
 contextBridge.exposeInMainWorld('api', {
   send: <D>(channel: string, data: D) => {

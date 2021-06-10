@@ -7,9 +7,11 @@ export interface ConfigTorrent {
 
 const config = new Store<{
   torrents: ConfigTorrent[];
+  torrentSavePath: string;
 }>({
   defaults: {
     torrents: [],
+    torrentSavePath: 'C:/sentinel',
   },
 });
 

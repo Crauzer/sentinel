@@ -1,11 +1,8 @@
 import { app, BrowserWindow, nativeTheme, ipcMain, dialog } from 'electron';
 import path from 'path';
-
-import WebTorrent, { Torrent } from 'webtorrent';
-import { TorrentState, TorrentStatus } from './ipcTypes';
-import Store from 'electron-store';
-import TorrentManager from './torrentManager';
+import TorrentManager, { TorrentWrapper } from './torrentManager';
 import globalConfig from './globalConfig';
+import { TorrentState } from '@/src-shared/torrent';
 
 require('@electron/remote/main').initialize();
 
@@ -23,8 +20,6 @@ try {
 let mainWindow: BrowserWindow | null;
 const torrentManager = new TorrentManager();
 
-const torrentSavePath = 'C:/sentinel';
-
 initializeConfig();
 
 function initializeConfig() {
@@ -32,7 +27,11 @@ function initializeConfig() {
   const configTorrents = globalConfig.get('torrents');
   for (const configTorrent of configTorrents) {
     if (configTorrent) {
-      torrentManager.addTorrent(configTorrent.path);
+      const torrent = torrentManager.addTorrent(configTorrent.path);
+
+      if (configTorrent.isPaused) {
+        torrentManager.pauseTorrent(new TorrentWrapper(torrent));
+      }
     }
   }
 }

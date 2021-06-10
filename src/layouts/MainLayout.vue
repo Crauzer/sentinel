@@ -156,7 +156,11 @@
       </q-page-container>
 
       <q-footer elevated bordered class="bg-dark">
-        <torrent-info-panel> </torrent-info-panel>
+        <torrent-info-panel
+          :torrent="selectedTorrent"
+          v-if="torrents.length != 0 || selectedTorrent"
+        >
+        </torrent-info-panel>
       </q-footer>
     </q-layout>
   </div>
@@ -166,12 +170,13 @@
 import { QTable } from 'quasar';
 import { defineComponent, computed, ref } from 'vue';
 import SentinelWindow from '../SentinelWindow';
-import TorrentsModule, { TorrentState } from '../store/modules/torrents';
+import TorrentsModule from '../store/modules/torrents';
 import { getModule } from 'vuex-module-decorators';
 import { useStore } from '../store';
 import { formatBytes, formatBytesPerSecond } from '../utils';
-import TorrentInfoPanel from '../components/TorrentInfoPanel.vue';
+import TorrentInfoPanel from '../components/TorrentInfo/TorrentInfoPanel.vue';
 import moment from 'moment';
+import { TorrentState } from '@/src-shared/torrent';
 
 declare let window: SentinelWindow;
 
@@ -181,8 +186,7 @@ const torrentColumns: QTable['columns'] = [
     required: true,
     label: 'Name',
     align: 'left',
-    field: (row: TorrentState) => row.name,
-    format: (value: string) => `${value}`,
+    field: 'name',
     sortable: true,
   },
   {
@@ -273,21 +277,29 @@ export default defineComponent({
       window.api.close();
     }
 
-    function onTorrentRowClick(row: TorrentState) {
-      torrentsModule.setSelectedTorrent(row);
-    }
-
     return {
       minimize,
       toggleMaximize,
       closeApp,
       openTorrentFile: () => torrentsModule.openTorrentFile(),
-      onTorrentRowClick,
-      torrentsInfoSplitterModel: ref(50),
       torrentColumns,
-      torrents: computed(() => torrentsModule.torrents),
-      selectedTorrent: computed(() => torrentsModule.selectedTorrent),
     };
+  },
+  computed: {
+    torrents() {
+      const torrentsModule = getModule(TorrentsModule, this.$store);
+      return torrentsModule.torrents;
+    },
+    selectedTorrent: {
+      get: function () {
+        const torrentsModule = getModule(TorrentsModule, this.$store);
+        return torrentsModule.selectedTorrent;
+      },
+      set: function (value: TorrentState) {
+        const torrentsModule = getModule(TorrentsModule, this.$store);
+        torrentsModule.setSelectedTorrent(value);
+      },
+    },
   },
   methods: {
     formatBytes(bytes: number) {
@@ -298,6 +310,10 @@ export default defineComponent({
     },
     formatTimeRemaining(seconds: number) {
       return moment.duration(seconds, 'seconds').humanize(true);
+    },
+
+    onTorrentRowClick(torrent: TorrentState) {
+      this.selectedTorrent = torrent;
     },
 
     async onTorrentResume(torrent: TorrentState) {

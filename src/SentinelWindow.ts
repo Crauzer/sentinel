@@ -1,5 +1,5 @@
+import { TorrentState } from '@/src-shared/torrent';
 import { Torrent } from 'webtorrent';
-import { TorrentState } from './store/modules/torrents';
 
 export interface WindowApi {
   send: (channel: string, ...arg: any) => void;

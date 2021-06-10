@@ -1,36 +1,8 @@
-import {
-  VuexModule,
-  Mutation,
-  Action,
-  Module,
-  MutationAction,
-} from 'vuex-module-decorators';
+import { VuexModule, Mutation, Action, Module } from 'vuex-module-decorators';
 import SentinelWindow from '@/src/SentinelWindow';
+import { TorrentState } from '@/src-shared/torrent';
 
 declare let window: SentinelWindow;
-
-export interface TorrentState {
-  name: string;
-  infoHash: string;
-  progress: number;
-  downloadSpeed: number;
-  uploadSpeed: number;
-  timeRemaining: number;
-  received: number;
-  downloaded: number;
-  uploaded: number;
-  ratio: number;
-  length: number;
-  numPeers: number;
-  status: TorrentStatus;
-}
-
-export enum TorrentStatus {
-  Idle = 'Idle',
-  Paused = 'Paused',
-  Downloading = 'Downloading',
-  Finished = 'Finished',
-}
 
 @Module({
   name: 'torrents',
@@ -40,19 +12,45 @@ export default class TorrentsModule extends VuexModule {
   selectedTorrent: TorrentState | null = null;
 
   @Mutation
-  addTorrent(torrent: TorrentState) {
-    this.torrents.push(torrent);
+  ADD_TORRENT(torrent: TorrentState) {
+    this.torrents = [...this.torrents, torrent];
   }
 
   @Mutation
-  setTorrentStates(states: TorrentState[]) {
+  SET_TORRENT_STATES(states: TorrentState[]) {
     this.torrents = states;
+
+    if (this.selectedTorrent) {
+      const matchingTorrent = this.torrents.find(
+        (torrent) => torrent.infoHash == this.selectedTorrent?.infoHash
+      );
+
+      if (matchingTorrent) {
+        this.selectedTorrent = matchingTorrent;
+      } else {
+        this.selectedTorrent = null;
+      }
+    }
   }
 
   @Mutation
-  setSelectedTorrent(selectedTorrent: TorrentState) {
-    console.log(selectedTorrent);
+  SET_SELECTED_TORRENT(selectedTorrent: TorrentState | null) {
     this.selectedTorrent = selectedTorrent;
+  }
+
+  @Action
+  addTorrent(torrent: TorrentState) {
+    this.ADD_TORRENT(torrent);
+  }
+
+  @Action
+  setTorrentStates(states: TorrentState[]) {
+    this.SET_TORRENT_STATES(states);
+  }
+
+  @Action
+  setSelectedTorrent(selectedTorrent: TorrentState | null) {
+    this.SET_SELECTED_TORRENT(selectedTorrent);
   }
 
   @Action
@@ -64,7 +62,7 @@ export default class TorrentsModule extends VuexModule {
           window.torrentApi
             .addTorrent(path)
             .then((torrent) => {
-              this.addTorrent(torrent);
+              this.ADD_TORRENT(torrent);
             })
             .catch((reason) => console.error(reason));
         }
