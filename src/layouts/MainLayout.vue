@@ -171,6 +171,8 @@
                 </q-menu>
               </q-tr>
             </template>
+
+            <template v-slot:no-data="{}"> </template>
           </q-table>
         </q-page>
       </q-page-container>
@@ -226,7 +228,7 @@ import { useStore } from '../store';
 import { formatBytes, formatBytesPerSecond } from '../../src-shared/utils';
 import TorrentInfoPanel from '../components/TorrentInfo/TorrentInfoPanel.vue';
 import moment from 'moment';
-import { TorrentState, TorrentStatus } from '@/src-shared/torrent';
+import { TorrentState, TorrentStatus } from '../../src-shared/torrent';
 
 declare let window: SentinelWindow;
 
