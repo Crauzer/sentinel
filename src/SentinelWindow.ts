@@ -1,3 +1,4 @@
+import GlobalStats from '@/src-shared/globalStats';
 import { TorrentState } from '@/src-shared/torrent';
 import { Torrent } from 'webtorrent';
 
@@ -37,7 +38,12 @@ export interface WindowTorrentApi {
   fetchTorrentStates: () => Promise<TorrentState[]>;
 }
 
+export interface WindowGlobalStatsApi {
+  fetchGlobalStats: () => Promise<GlobalStats>;
+}
+
 export default interface SentinelWindow extends Window {
   api: WindowApi;
   torrentApi: WindowTorrentApi;
+  globalStatsApi: WindowGlobalStatsApi;
 }

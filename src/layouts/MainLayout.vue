@@ -7,6 +7,11 @@
           <div>Sentinel</div>
 
           <q-space />
+          <div>
+            D: {{ formatBytesPerSecond(globalStats.downloadSpeed) }} U:
+            {{ formatBytesPerSecond(globalStats.uploadSpeed) }}
+          </div>
+          <q-space />
 
           <q-btn dense flat icon="minimize" @click="minimize" />
           <q-btn dense flat icon="crop_square" @click="toggleMaximize" />
@@ -17,14 +22,26 @@
           <div class="cursor-pointer non-selectable">
             File
             <q-menu>
-              <q-list dense style="min-width: 100px">
+              <q-list style="min-width: 100px">
                 <q-item clickable v-close-popup @click="openTorrentFile">
+                  <q-item-section avatar>
+                    <q-icon name="mdi-file" />
+                  </q-item-section>
                   <q-item-section>Open Torrent File</q-item-section>
+                </q-item>
+                <q-item clickable v-close-popup @click="isAddingMagnet = true">
+                  <q-item-section avatar>
+                    <q-icon name="mdi-magnet" />
+                  </q-item-section>
+                  <q-item-section>Add Torrent Magnet</q-item-section>
                 </q-item>
 
                 <q-separator />
 
                 <q-item clickable v-close-popup @click="closeApp">
+                  <q-item-section avatar>
+                    <q-icon name="close" />
+                  </q-item-section>
                   <q-item-section>Quit</q-item-section>
                 </q-item>
               </q-list>
@@ -44,7 +61,10 @@
             <template v-slot:body="props">
               <q-tr
                 :props="props"
-                class="cursor-pointer"
+                :class="{
+                  'cursor-pointer': true,
+                  torrentRowPaused: props.row.status == 'Paused',
+                }"
                 @click.native="onTorrentRowClick(props.row)"
               >
                 <q-td key="name" :props="props">
@@ -162,6 +182,35 @@
         >
         </torrent-info-panel>
       </q-footer>
+
+      <q-dialog v-model="isAddingMagnet">
+        <q-card style="width: 700px; max-width: 80vw">
+          <q-form @submit="onAddMagnetTorrent" class="q-gutter-md items-center">
+            <q-input
+              filled
+              v-model="addedMagnetTorrent"
+              label="Magnet Link"
+              hint="Magnet link"
+              lazy-rules
+              :rules="[
+                (val) =>
+                  (val && val.length > 0) || 'Please enter a magnet link',
+              ]"
+            />
+
+            <q-card-actions align="center">
+              <q-btn label="Add" type="submit" color="primary" />
+              <q-btn
+                label="Close"
+                type="reset"
+                color="primary"
+                @click="onAddMagnetTorrentClose"
+                flat
+              />
+            </q-card-actions>
+          </q-form>
+        </q-card>
+      </q-dialog>
     </q-layout>
   </div>
 </template>
@@ -171,12 +220,13 @@ import { QTable } from 'quasar';
 import { defineComponent, computed, ref } from 'vue';
 import SentinelWindow from '../SentinelWindow';
 import TorrentsModule from '../store/modules/torrents';
+import GlobalStatsModule from '../store/modules/globalStats';
 import { getModule } from 'vuex-module-decorators';
 import { useStore } from '../store';
-import { formatBytes, formatBytesPerSecond } from '../utils';
+import { formatBytes, formatBytesPerSecond } from '../../src-shared/utils';
 import TorrentInfoPanel from '../components/TorrentInfo/TorrentInfoPanel.vue';
 import moment from 'moment';
-import { TorrentState } from '@/src-shared/torrent';
+import { TorrentState, TorrentStatus } from '@/src-shared/torrent';
 
 declare let window: SentinelWindow;
 
@@ -252,15 +302,30 @@ export default defineComponent({
   components: {
     TorrentInfoPanel,
   },
+  data() {
+    return {
+      isAddingMagnet: false,
+      addedMagnetTorrent: '',
+    };
+  },
   setup: function () {
     const store = useStore();
     const torrentsModule = getModule(TorrentsModule, store);
+    const globalStatsModule = getModule(GlobalStatsModule, store);
 
     setInterval(() => {
       window.torrentApi
         .fetchTorrentStates()
         .then((states) => {
           torrentsModule.setTorrentStates(states);
+        })
+        .catch((reason) => console.error(reason));
+
+      window.globalStatsApi
+        .fetchGlobalStats()
+        .then((globalStats) => {
+          globalStatsModule.setDownloadSpeed(globalStats.downloadSpeed);
+          globalStatsModule.setUploadSpeed(globalStats.uploadSpeed);
         })
         .catch((reason) => console.error(reason));
     }, 250);
@@ -290,6 +355,11 @@ export default defineComponent({
       const torrentsModule = getModule(TorrentsModule, this.$store);
       return torrentsModule.torrents;
     },
+    globalStats() {
+      const globalStatsModule = getModule(GlobalStatsModule, this.$store);
+
+      return globalStatsModule;
+    },
     selectedTorrent: {
       get: function () {
         const torrentsModule = getModule(TorrentsModule, this.$store);
@@ -303,17 +373,40 @@ export default defineComponent({
   },
   methods: {
     formatBytes(bytes: number) {
-      return formatBytes(bytes);
+      if (bytes === Number.NaN) {
+        return '∞';
+      } else {
+        return formatBytes(bytes);
+      }
     },
     formatBytesPerSecond(bytes: number) {
-      return formatBytesPerSecond(bytes);
+      if (bytes === Number.NaN) {
+        return '∞';
+      } else {
+        return formatBytesPerSecond(bytes);
+      }
     },
-    formatTimeRemaining(seconds: number) {
-      return moment.duration(seconds, 'seconds').humanize(true);
+    formatTimeRemaining(status: TorrentStatus, seconds: number) {
+      if (status !== TorrentStatus.Downloading) {
+        return '∞';
+      } else {
+        return moment.duration(seconds, 'seconds').humanize(true);
+      }
     },
 
     onTorrentRowClick(torrent: TorrentState) {
       this.selectedTorrent = torrent;
+    },
+
+    onAddMagnetTorrent() {
+      const torrentsModule = getModule(TorrentsModule, this.$store);
+
+      torrentsModule.addTorrent(this.addedMagnetTorrent);
+
+      this.isAddingMagnet = false;
+    },
+    onAddMagnetTorrentClose() {
+      this.isAddingMagnet = false;
     },
 
     async onTorrentResume(torrent: TorrentState) {

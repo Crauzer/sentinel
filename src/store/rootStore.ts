@@ -1,10 +1,9 @@
 import { createStore } from 'vuex';
-import { Torrent } from 'webtorrent';
 import torrents from './modules/torrents';
+import globalStats from './modules/globalStats';
 
 export interface RootState {
   isUiDisabled: boolean;
-  selectedTorrent?: Torrent;
 }
 
 const rootStore = createStore<RootState>({
@@ -13,6 +12,7 @@ const rootStore = createStore<RootState>({
   },
   modules: {
     torrents,
+    globalStats,
   },
   // enable strict mode (adds overhead!)
   // for dev mode and --debug builds only

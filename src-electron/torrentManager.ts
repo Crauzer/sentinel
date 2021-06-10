@@ -15,11 +15,13 @@ export default class TorrentManager {
       path: globalConfig.get('torrentSavePath'),
     });
 
-    this.torrents.push(new TorrentWrapper(torrent));
-
     torrent.on('metadata', () => {
       this.cacheTorrentMetadata();
+      torrentWrapper.requestNewState();
     });
+
+    const torrentWrapper = new TorrentWrapper(torrent);
+    this.torrents.push(torrentWrapper);
 
     return torrent;
   }

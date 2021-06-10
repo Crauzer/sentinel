@@ -1,8 +1,10 @@
+import GlobalStats from '../src-shared/globalStats';
 import { app, BrowserWindow, nativeTheme, ipcMain, dialog } from 'electron';
 import path from 'path';
 import TorrentManager, { TorrentWrapper } from './torrentManager';
 import globalConfig from './globalConfig';
 import { TorrentState } from '@/src-shared/torrent';
+import { formatBytesPerSecond } from '../src-shared/utils';
 
 require('@electron/remote/main').initialize();
 
@@ -145,4 +147,19 @@ ipcMain.handle('fetchTorrentStates', (): TorrentState[] => {
       return torrent.state;
     })
     .map((torrent) => torrent.state as TorrentState);
+});
+
+ipcMain.handle('fetchGlobalStats', (): GlobalStats => {
+  mainWindow?.setTitle(
+    `[D: ${formatBytesPerSecond(
+      torrentManager.client.downloadSpeed
+    )} | U: ${formatBytesPerSecond(
+      torrentManager.client.uploadSpeed
+    )}] Sentinel`
+  );
+
+  return {
+    downloadSpeed: torrentManager.client.downloadSpeed,
+    uploadSpeed: torrentManager.client.uploadSpeed,
+  };
 });

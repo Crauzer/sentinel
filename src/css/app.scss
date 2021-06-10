@@ -1,10 +1,14 @@
 // app global css in SCSS form
  ::-webkit-scrollbar {
     background-color: $dark;
-    width: .8em
+    width: .4em
 }
 
  ::-webkit-scrollbar-thumb:window-inactive,
  ::-webkit-scrollbar-thumb {
     background: $primary
+}
+
+.torrentRowPaused {
+    box-shadow: inset 0px 0px 3px 0px $warning;
 }

@@ -64,7 +64,7 @@
 
 <script lang="ts">
 import { QTable } from 'quasar';
-import { formatBytes } from '../../utils';
+import { formatBytes } from '../../../src-shared/utils';
 import { defineComponent, computed, ref } from 'vue';
 import { getModule } from 'vuex-module-decorators';
 import { useStore } from '../../store';

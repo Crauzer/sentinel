@@ -12,8 +12,20 @@ export default class TorrentsModule extends VuexModule {
   selectedTorrent: TorrentState | null = null;
 
   @Mutation
-  ADD_TORRENT(torrent: TorrentState) {
+  ADD_TORRENT_STATE(torrent: TorrentState) {
     this.torrents = [...this.torrents, torrent];
+  }
+
+  @Mutation
+  ADD_TORRENT(path: string) {
+    window.torrentApi
+      .addTorrent(path)
+      .then((torrent) => {
+        this.ADD_TORRENT_STATE(torrent);
+      })
+      .catch((reason) => {
+        console.error(reason);
+      });
   }
 
   @Mutation
@@ -39,8 +51,13 @@ export default class TorrentsModule extends VuexModule {
   }
 
   @Action
-  addTorrent(torrent: TorrentState) {
-    this.ADD_TORRENT(torrent);
+  addTorrentState(torrent: TorrentState) {
+    this.ADD_TORRENT_STATE(torrent);
+  }
+
+  @Action
+  addTorrent(path: string) {
+    this.ADD_TORRENT(path);
   }
 
   @Action
@@ -62,7 +79,7 @@ export default class TorrentsModule extends VuexModule {
           window.torrentApi
             .addTorrent(path)
             .then((torrent) => {
-              this.ADD_TORRENT(torrent);
+              this.ADD_TORRENT_STATE(torrent);
             })
             .catch((reason) => console.error(reason));
         }

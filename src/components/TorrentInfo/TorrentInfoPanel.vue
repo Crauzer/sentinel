@@ -37,9 +37,6 @@
 
 <script lang="ts">
 import { defineComponent, computed, ref, PropType } from 'vue';
-import { getModule } from 'vuex-module-decorators';
-import { useStore } from '../../store';
-import TorrentsModule from '../../store/modules/torrents';
 import TorrentInfoPanelFiles from './TorrentInfoPanelFiles.vue';
 import { TorrentState } from '../../../src-shared/torrent';
 

@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { BrowserWindow } from '@electron/remote';
 import { TorrentState } from '@/src-shared/torrent';
+import GlobalStats from '@/src-shared/globalStats';
 
 contextBridge.exposeInMainWorld('api', {
   send: <D>(channel: string, data: D) => {
@@ -116,6 +117,17 @@ contextBridge.exposeInMainWorld('torrentApi', {
       ipcRenderer
         .invoke('fetchTorrentStates')
         .then((states: TorrentState[]) => resolve(states))
+        .catch((reason) => reject(reason));
+    });
+  },
+});
+
+contextBridge.exposeInMainWorld('globalStatsApi', {
+  fetchGlobalStats(): Promise<GlobalStats> {
+    return new Promise((resolve, reject) => {
+      ipcRenderer
+        .invoke('fetchGlobalStats')
+        .then((globalStats: GlobalStats) => resolve(globalStats))
         .catch((reason) => reject(reason));
     });
   },
