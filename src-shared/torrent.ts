@@ -1,5 +1,6 @@
 export interface TorrentState {
   name: string;
+  magnet: string;
   infoHash: string;
   progress: number;
   downloadSpeed: number;

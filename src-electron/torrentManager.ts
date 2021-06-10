@@ -137,6 +137,7 @@ export class TorrentWrapper {
 
     this.state = {
       name: this.internalTorrent.name,
+      magnet: this.internalTorrent.magnetURI,
       infoHash: this.internalTorrent.infoHash,
       progress: this.internalTorrent.progress,
       downloadSpeed: this.internalTorrent.downloadSpeed,

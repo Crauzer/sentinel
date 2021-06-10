@@ -141,7 +141,7 @@
                       @click="onTorrentResume(props.row)"
                     >
                       <q-item-section avatar>
-                        <q-icon color="primary" name="play" />
+                        <q-icon color="primary" name="mdi-play" />
                       </q-item-section>
                       <q-item-section>Resume</q-item-section>
                     </q-item>
@@ -156,7 +156,9 @@
                       </q-item-section>
                       <q-item-section>Pause</q-item-section>
                     </q-item>
+
                     <q-separator />
+
                     <q-item
                       clickable
                       v-close-popup
@@ -166,6 +168,19 @@
                         <q-icon color="primary" name="delete" />
                       </q-item-section>
                       <q-item-section>Delete</q-item-section>
+                    </q-item>
+
+                    <q-separator />
+
+                    <q-item
+                      clickable
+                      v-close-popup
+                      @click="onTorrentCopyMagnet(props.row)"
+                    >
+                      <q-item-section avatar>
+                        <q-icon color="primary" name="mdi-magnet" />
+                      </q-item-section>
+                      <q-item-section>Copy Magnet</q-item-section>
                     </q-item>
                   </q-list>
                 </q-menu>
@@ -218,7 +233,7 @@
 </template>
 
 <script lang="ts">
-import { QTable } from 'quasar';
+import { QTable, useQuasar } from 'quasar';
 import { defineComponent, computed, ref } from 'vue';
 import SentinelWindow from '../SentinelWindow';
 import TorrentsModule from '../store/modules/torrents';
@@ -229,6 +244,7 @@ import { formatBytes, formatBytesPerSecond } from '../../src-shared/utils';
 import TorrentInfoPanel from '../components/TorrentInfo/TorrentInfoPanel.vue';
 import moment from 'moment';
 import { TorrentState, TorrentStatus } from '../../src-shared/torrent';
+import copy from 'copy-to-clipboard';
 
 declare let window: SentinelWindow;
 
@@ -398,6 +414,17 @@ export default defineComponent({
 
     onTorrentRowClick(torrent: TorrentState) {
       this.selectedTorrent = torrent;
+    },
+    onTorrentCopyMagnet(torrent: TorrentState) {
+      copy(torrent.magnet);
+
+      const $q = useQuasar();
+
+      $q.notify({
+        message: 'Copied magnet',
+        icon: 'mdi-magnet',
+        timeout: 500,
+      });
     },
 
     onAddMagnetTorrent() {
