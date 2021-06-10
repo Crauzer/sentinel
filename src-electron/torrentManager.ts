@@ -1,6 +1,14 @@
-import WebTorrent, { Torrent } from 'webtorrent';
+import WebTorrent, { Torrent, Wire } from 'webtorrent';
 import globalConfig, { ConfigTorrent } from './globalConfig';
 import { TorrentState, TorrentStatus } from '../src-shared/torrent';
+
+declare module 'webtorrent' {
+  interface Torrent {
+    wires: Wire[];
+  }
+
+  interface Wire {}
+}
 
 export default class TorrentManager {
   client: WebTorrent.Instance;
@@ -29,30 +37,19 @@ export default class TorrentManager {
   pauseTorrent(pauseTorrent: TorrentWrapper) {
     pauseTorrent.isPaused = true;
 
+    pauseTorrent.pausedWires = [...pauseTorrent.internalTorrent.wires];
+    pauseTorrent.internalTorrent.wires = [];
+
     pauseTorrent.internalTorrent.pause();
-    pauseTorrent.internalTorrent.destroy(
-      {
-        destroyStore: false,
-      },
-      (err) => console.error(err)
-    );
 
     this.cacheTorrentMetadata();
   }
   resumeTorrent(resumeTorrent: TorrentWrapper) {
     resumeTorrent.isPaused = false;
 
-    resumeTorrent.internalTorrent = this.client.add(
-      resumeTorrent.internalTorrent.magnetURI,
-      {
-        path: globalConfig.get('torrentSavePath'),
-      }
-    );
-
-    resumeTorrent.internalTorrent.on('infoHash', () => {
-      this.cacheTorrentMetadata();
-      resumeTorrent.requestNewState();
-    });
+    resumeTorrent.internalTorrent.wires = [...resumeTorrent.pausedWires];
+    resumeTorrent.pausedWires = [];
+    resumeTorrent.internalTorrent.resume();
   }
 
   deleteTorrent(deleteTorrent: TorrentWrapper) {
@@ -96,8 +93,9 @@ export default class TorrentManager {
 
 export class TorrentWrapper {
   internalTorrent: Torrent;
-  isPaused = false;
   state?: TorrentState;
+  isPaused = false;
+  pausedWires: Wire[] = [];
 
   constructor(torrent: Torrent) {
     this.internalTorrent = torrent;
