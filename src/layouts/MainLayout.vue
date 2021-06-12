@@ -439,13 +439,37 @@ export default defineComponent({
     },
 
     async onTorrentResume(torrent: TorrentState) {
+      const $q = useQuasar();
+
       await window.torrentApi.resumeTorrent(torrent.infoHash);
+
+      $q.notify({
+        message: 'Resumed ' + torrent.name,
+        icon: 'mdi-play',
+        timeout: 500,
+      });
     },
     async onTorrentPause(torrent: TorrentState) {
+      const $q = useQuasar();
+
       await window.torrentApi.pauseTorrent(torrent.infoHash);
+
+      $q.notify({
+        message: 'Paused ' + torrent.name,
+        icon: 'mdi-pause',
+        timeout: 500,
+      });
     },
     async onTorrentDelete(torrent: TorrentState) {
+      const $q = useQuasar();
+
       await window.torrentApi.deleteTorrent(torrent.infoHash);
+
+      $q.notify({
+        message: 'Deleted ' + torrent.name,
+        icon: 'delete',
+        timeout: 500,
+      });
     },
   },
 });

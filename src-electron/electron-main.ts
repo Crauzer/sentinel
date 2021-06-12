@@ -29,13 +29,16 @@ function initializeConfig() {
   const configTorrents = globalConfig.get('torrents');
   for (const configTorrent of configTorrents) {
     if (configTorrent) {
-      const torrent = torrentManager.addTorrent(configTorrent.path);
-
-      if (configTorrent.isPaused) {
-        torrent.on('ready', () => {
-          torrentManager.pauseTorrent(new TorrentWrapper(torrent));
-        });
-      }
+      torrentManager
+        .addTorrent(configTorrent.path)
+        .then((torrent) => {
+          if (configTorrent.isPaused) {
+            torrent.on('ready', () => {
+              torrentManager.pauseTorrent(new TorrentWrapper(torrent));
+            });
+          }
+        })
+        .catch((reason) => console.error(reason));
     }
   }
 }
@@ -109,8 +112,8 @@ ipcMain.handle('openAddTorrentDialog', () => {
   return filePaths ? filePaths[0] : undefined;
 });
 
-ipcMain.handle('addTorrent', (event, { path }) => {
-  torrentManager.addTorrent(path);
+ipcMain.handle('addTorrent', async (event, { path }) => {
+  await torrentManager.addTorrent(path);
 });
 
 ipcMain.handle('resumeTorrent', (event, { infoHash }) => {

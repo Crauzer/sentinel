@@ -18,20 +18,30 @@ export default class TorrentManager {
     this.client = new WebTorrent();
   }
 
-  addTorrent(path: string): Torrent {
-    const torrent = this.client.add(path, {
-      path: globalConfig.get('torrentSavePath'),
+  addTorrent(path: string): Promise<Torrent> {
+    return new Promise((resolve, reject) => {
+      if (
+        !this.client.torrents.find(
+          (torrent) => torrent.path === path || torrent.magnetURI === path
+        )
+      ) {
+        const torrent = this.client.add(path, {
+          path: globalConfig.get('torrentSavePath'),
+        });
+
+        torrent.on('metadata', () => {
+          const torrentWrapper = new TorrentWrapper(torrent);
+          this.torrents.push(torrentWrapper);
+
+          this.cacheTorrentMetadata();
+          torrentWrapper.requestNewState();
+
+          resolve(torrent);
+        });
+      } else {
+        reject();
+      }
     });
-
-    torrent.on('metadata', () => {
-      this.cacheTorrentMetadata();
-      torrentWrapper.requestNewState();
-    });
-
-    const torrentWrapper = new TorrentWrapper(torrent);
-    this.torrents.push(torrentWrapper);
-
-    return torrent;
   }
 
   pauseTorrent(pauseTorrent: TorrentWrapper) {
@@ -50,6 +60,8 @@ export default class TorrentManager {
     resumeTorrent.internalTorrent.wires = resumeTorrent.pausedWires;
     resumeTorrent.pausedWires = [];
     resumeTorrent.internalTorrent.resume();
+
+    this.cacheTorrentMetadata();
   }
 
   deleteTorrent(deleteTorrent: TorrentWrapper) {
@@ -103,15 +115,17 @@ export class TorrentWrapper {
     this.internalTorrent.on('ready', () => this.getStateFromTorrent());
   }
 
-  resume(manager: TorrentManager) {
+  async resume(manager: TorrentManager) {
     this.isPaused = false;
 
     if (
-      manager.client.torrents.find(
+      !manager.client.torrents.find(
         (torrent) => torrent.magnetURI == this.internalTorrent.magnetURI
-      ) === undefined
+      )
     ) {
-      this.internalTorrent = manager.addTorrent(this.internalTorrent.magnetURI);
+      this.internalTorrent = await manager.addTorrent(
+        this.internalTorrent.magnetURI
+      );
     }
 
     manager.cacheTorrentMetadata();
