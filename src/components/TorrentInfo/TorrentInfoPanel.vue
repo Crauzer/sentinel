@@ -1,5 +1,20 @@
 <template>
   <div class="column justify-start" v-if="torrent">
+    <q-tabs
+      v-model="tab"
+      active-color="primary"
+      indicator-color="primary"
+      align="justify"
+      narrow-indicator
+      dense
+    >
+      <q-tab name="general" label="General" />
+      <q-tab name="trackers" label="Trackers" />
+      <q-tab name="files" label="Files" />
+    </q-tabs>
+
+    <q-separator />
+
     <q-tab-panels v-model="tab">
       <q-tab-panel name="general">
         <h6 v-text="torrent.name"></h6>
@@ -17,26 +32,11 @@
         <torrent-info-panel-files key="files" />
       </q-tab-panel>
     </q-tab-panels>
-
-    <q-separator />
-
-    <q-tabs
-      v-model="tab"
-      active-color="primary"
-      indicator-color="primary"
-      align="justify"
-      narrow-indicator
-      dense
-    >
-      <q-tab name="general" label="General" />
-      <q-tab name="trackers" label="Trackers" />
-      <q-tab name="files" label="Files" />
-    </q-tabs>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, ref, PropType } from 'vue';
+import { defineComponent, ref, PropType } from 'vue';
 import TorrentInfoPanelFiles from './TorrentInfoPanelFiles.vue';
 import { TorrentState } from '../../../src-shared/torrent';
 

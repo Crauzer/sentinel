@@ -29,7 +29,7 @@ export default class TorrentManager {
           path: globalConfig.get('torrentSavePath'),
         });
 
-        torrent.on('metadata', () => {
+        torrent.on('infoHash', () => {
           const torrentWrapper = new TorrentWrapper(torrent);
           this.torrents.push(torrentWrapper);
 

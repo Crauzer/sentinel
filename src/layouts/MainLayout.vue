@@ -58,6 +58,15 @@
             :columns="torrentColumns"
             hide-pagination
           >
+            <template v-slot:header="props">
+              <q-tr :props="props">
+                <q-th auto-width />
+                <q-th v-for="col in props.cols" :key="col.name" :props="props">
+                  {{ col.label }}
+                </q-th>
+              </q-tr>
+            </template>
+
             <template v-slot:body="props">
               <q-tr
                 :props="props"
@@ -67,6 +76,16 @@
                 }"
                 @click.native="onTorrentRowClick(props.row)"
               >
+                <q-td auto-width>
+                  <q-btn
+                    size="sm"
+                    color="primary"
+                    round
+                    dense
+                    @click="props.expand = !props.expand"
+                    :icon="props.expand ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+                  />
+                </q-td>
                 <q-td key="name" :props="props">
                   {{ props.row.name }}
                 </q-td>
@@ -185,20 +204,20 @@
                   </q-list>
                 </q-menu>
               </q-tr>
+              <q-tr v-show="props.expand" :props="props">
+                <q-td colspan="100%">
+                  <q-card bordered>
+                    <torrent-info-panel :torrent="props.row">
+                    </torrent-info-panel>
+                  </q-card>
+                </q-td>
+              </q-tr>
             </template>
 
             <template v-slot:no-data="{}"> </template>
           </q-table>
         </q-page>
       </q-page-container>
-
-      <q-footer elevated bordered class="bg-dark">
-        <torrent-info-panel
-          :torrent="selectedTorrent"
-          v-if="torrents.length != 0 || selectedTorrent"
-        >
-        </torrent-info-panel>
-      </q-footer>
 
       <q-dialog v-model="isAddingMagnet">
         <q-card style="width: 700px; max-width: 80vw">

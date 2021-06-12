@@ -4,6 +4,8 @@
     :rows="torrent.files"
     :columns="columns"
     hide-pagination
+    style="max-height: 96rem"
+    virtual-scroll
   >
     <template v-slot:body="props">
       <q-tr :props="props" class="cursor-pointer">

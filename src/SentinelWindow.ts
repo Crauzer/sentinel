@@ -28,7 +28,7 @@ export interface WindowApi {
 }
 
 export interface WindowTorrentApi {
-  addTorrent: (path: string) => Promise<TorrentState>;
+  addTorrent: (path: string) => Promise<void>;
   openTorrentFile: () => Promise<string | undefined>;
 
   resumeTorrent: (infoHash: string) => Promise<void>;
