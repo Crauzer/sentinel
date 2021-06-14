@@ -204,7 +204,11 @@
                   </q-list>
                 </q-menu>
               </q-tr>
-              <q-tr v-show="props.expand" :props="props">
+              <q-tr
+                v-show="props.expand"
+                :props="props"
+                class="torrentRowInfoRow"
+              >
                 <q-td colspan="100%">
                   <q-card bordered>
                     <torrent-info-panel :torrent="props.row">

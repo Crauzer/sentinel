@@ -12,3 +12,7 @@
 .torrentRowPaused {
     box-shadow: inset 0px 0px 3px 0px $warning;
 }
+
+.torrentRowInfoRow {
+    background-color: adjust-color($color: $primary, $alpha: -0.75)
+}

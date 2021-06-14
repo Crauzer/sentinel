@@ -5,6 +5,7 @@ import TorrentManager, { TorrentWrapper } from './torrentManager';
 import globalConfig from './globalConfig';
 import { TorrentState } from '@/src-shared/torrent';
 import { formatBytesPerSecond } from '../src-shared/utils';
+import { TrayMenu } from './TrayMenu';
 
 require('@electron/remote/main').initialize();
 
@@ -20,6 +21,7 @@ try {
 } catch (_) {}
 
 let mainWindow: BrowserWindow | null;
+let tray: TrayMenu | null;
 const torrentManager = new TorrentManager();
 
 initializeConfig();
@@ -49,6 +51,11 @@ function createWindow() {
     height: 600,
     useContentSize: true,
     frame: false,
+    icon: path.resolve(
+      __dirname,
+      process.env.QUASAR_PUBLIC_FOLDER as string,
+      'favicon.ico'
+    ),
     webPreferences: {
       contextIsolation: true,
       enableRemoteModule: true,
@@ -79,7 +86,14 @@ function createWindow() {
   });
 }
 
-app.on('ready', createWindow);
+app
+  .whenReady()
+  .then(() => {
+    tray = new TrayMenu();
+
+    createWindow();
+  })
+  .catch((reason) => console.error(reason));
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
