@@ -1,9 +1,20 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { BrowserWindow } from '@electron/remote';
-import { TorrentState } from '@/src-shared/torrent';
-import GlobalStats from '@/src-shared/globalStats';
+import { TorrentState } from '../src-shared/torrent';
+import GlobalStats from '../src-shared/globalStats';
+import {
+  WindowApi,
+  WindowGlobalStatsApi,
+  WindowTorrentApi,
+} from '../src-shared/windowApis';
 
-contextBridge.exposeInMainWorld('api', {
+declare module 'electron' {
+  interface ContextBridge {
+    exposeInMainWorld<A>(apiKey: string, api: A): void;
+  }
+}
+
+contextBridge.exposeInMainWorld<WindowApi>('api', {
   send: <D>(channel: string, data: D) => {
     ipcRenderer.invoke(channel, data).catch((e) => console.log(e));
   },
@@ -65,7 +76,7 @@ contextBridge.exposeInMainWorld('api', {
   },
 });
 
-contextBridge.exposeInMainWorld('torrentApi', {
+contextBridge.exposeInMainWorld<WindowTorrentApi>('torrentApi', {
   addTorrent: (path: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       ipcRenderer
@@ -122,7 +133,7 @@ contextBridge.exposeInMainWorld('torrentApi', {
   },
 });
 
-contextBridge.exposeInMainWorld('globalStatsApi', {
+contextBridge.exposeInMainWorld<WindowGlobalStatsApi>('globalStatsApi', {
   fetchGlobalStats(): Promise<GlobalStats> {
     return new Promise((resolve, reject) => {
       ipcRenderer

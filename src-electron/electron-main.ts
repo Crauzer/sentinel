@@ -3,9 +3,9 @@ import { app, BrowserWindow, nativeTheme, ipcMain, dialog } from 'electron';
 import path from 'path';
 import TorrentManager, { TorrentWrapper } from './torrentManager';
 import globalConfig from './globalConfig';
-import { TorrentState } from '@/src-shared/torrent';
+import { TorrentState } from '../src-shared/torrent';
 import { formatBytesPerSecond } from '../src-shared/utils';
-import { TrayMenu } from './TrayMenu';
+import { TrayMenu } from './trayMenu';
 
 require('@electron/remote/main').initialize();
 
@@ -85,6 +85,8 @@ function createWindow() {
     mainWindow = null;
   });
 }
+
+// --------- APP EVENT HANDLERS --------- \\
 
 app
   .whenReady()

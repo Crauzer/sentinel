@@ -74,7 +74,7 @@
                   'cursor-pointer': true,
                   torrentRowPaused: props.row.status == 'Paused',
                 }"
-                @click.native="onTorrentRowClick(props.row)"
+                @click="onTorrentRowClick(props.row)"
               >
                 <q-td auto-width>
                   <q-btn
@@ -257,7 +257,7 @@
 
 <script lang="ts">
 import { QTable, useQuasar } from 'quasar';
-import { defineComponent, computed, ref } from 'vue';
+import { defineComponent } from 'vue';
 import SentinelWindow from '../SentinelWindow';
 import TorrentsModule from '../store/modules/torrents';
 import GlobalStatsModule from '../store/modules/globalStats';
