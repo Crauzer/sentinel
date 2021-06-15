@@ -1,6 +1,6 @@
 import { VuexModule, Mutation, Action, Module } from 'vuex-module-decorators';
-import SentinelWindow from '@/src/SentinelWindow';
-import { TorrentState } from '@/src-shared/torrent';
+import SentinelWindow from '../../SentinelWindow';
+import { TorrentState } from '../../../src-shared/torrent';
 
 declare let window: SentinelWindow;
 
